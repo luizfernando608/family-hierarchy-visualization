@@ -1,6 +1,6 @@
 pandas
 networkx
-matplotlib.colors
+matplotlib
 dash
 dash_html_components
 dash_cytoscape
