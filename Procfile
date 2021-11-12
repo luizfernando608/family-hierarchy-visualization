@@ -1,1 +1,1 @@
-web: gunicorn family_dash_network:server
+web: gunicorn app:server
