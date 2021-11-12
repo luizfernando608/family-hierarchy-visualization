@@ -260,5 +260,4 @@ def highlight_node_path(source_id, target_id):
         return cytoscape_stylesheet + style,"", f"Relação de {len(path[0])}º grau"
     return cytoscape_stylesheet + style,"",""
 
-
-app.run_server(debug=False)
+server = app.run_server
