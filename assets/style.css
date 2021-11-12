@@ -29,8 +29,16 @@ background-color:  rgb(230, 230, 230); ;
 
 
 @media (min-width:50px)  { 
+    body, html { 
+        overflow-x: hidden; 
+        overflow-y: auto;
+    }
+    body{
+        font-size: 2vh;
+        
+    }
     h1,h2{
-        font-size: 30px;
+        font-size: 2.2vh;
         margin-left: 5px;
         margin-bottom: 5px;
     }
@@ -42,15 +50,15 @@ background-color:  rgb(230, 230, 230); ;
         flex-direction: row;
     }
     .dropdown{
-        font-size: 40px;
+        font-size: 2.5vh;
         width: 90vw;
-        /* height: 20px; */
-        
-        margin-bottom: 5px;
+        margin-bottom: 10px;
         margin-left: 5px;
+        height: 3vh;
     }
+
     #header{
-        height: 40px;
+        height: 3vh;
     }
     #image{
         height: 100%;
