@@ -205,7 +205,7 @@ app.layout = html.Div(id="body", children=[
                                  className="dropdown",
                                  options=[{'label': "Ancestrais", 'value': True},
                                          {'label': "Descendentes", 'value': False}],
-                                 searchable=True,
+                                 searchable=False,
                                  placeholder="Ancestrais ou Descendentes?"),
                     dcc.Dropdown(id='input-all',
                                  className="dropdown",
