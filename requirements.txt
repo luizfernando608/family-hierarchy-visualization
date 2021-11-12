@@ -1,0 +1,6 @@
+pandas
+networkx
+dash
+numpy
+dash_html_components
+dash_cytoscape
