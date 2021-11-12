@@ -165,6 +165,7 @@ cytoscape_stylesheet = [
 ]
 app = dash.Dash("Family Network")
 server = app.server
+
 app.layout = html.Div(id="body", children=[
     html.Article([
         html.Div(id="box-fields", children=[
