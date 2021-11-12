@@ -1,5 +1,5 @@
 body{
-    font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+    font-family: 'Courier New', Courier, monospace;
     
     margin: 0px;
 }
@@ -15,6 +15,7 @@ h2{
     margin-left: 10px;
     margin-bottom: 0px;
     font-size: 1.2rem;
+    font-weight: normal;
 }
 
 article{
@@ -67,10 +68,11 @@ p{
     margin-left: 10px;
 }
 
-@media (max-width: 1025px)
+@media (max-width:1028px) and (min-width: 768px)
 {
 p{
     font-size: 2vw;
+    
 }
 body{
     font-size: 3vh;
@@ -92,15 +94,16 @@ body{
     padding-bottom: 10px;
 }
 .dropdown{
-    width: 40vw;
+    width: 45vw;
     /* margin-left: 1vw;
     margin-right: 0px;
     margin-top: 5px;
     font-size: 2vh; */
     margin-left: 20px;
     margin-bottom: 0px;
+    margin-top: 10px;
     padding: 0px;
-    font-size: 1.8vw;
+    font-size: 30px;
 }
 #image{
     margin-top: 5px;
@@ -120,14 +123,34 @@ h2{
     padding-top: 0px;
     margin-top: 0px;
     margin-bottom: 0px;
-    font-size: 2vh;
+    font-size: 30px;
 }
 h1{
-    font-size: 2.5vh;
+    font-size: 30px;
 }
 #header{
     height: 3.5vw;
     justify-content: space-between;
+}
+
+}
+
+@media (max-width:768px)and(min-width:0px){
+h1,h2{
+    font-size: 30px;
+}
+.column2{
+    display: flex;
+    flex-direction: column;
+}
+#header{
+    flex-direction: row;
+}
+.dropdown{
+    font-size: 30px;
+    width: 80vw;
+    height: 30px;
+    margin-bottom: 15px;
 }
 
 }
