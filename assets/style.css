@@ -30,7 +30,7 @@ background-color:  rgb(230, 230, 230); ;
 
 @media (min-width:50px)  { 
     h1,h2{
-        font-size: 20px;
+        font-size: 30px;
         margin-left: 5px;
         margin-bottom: 5px;
     }
@@ -42,15 +42,15 @@ background-color:  rgb(230, 230, 230); ;
         flex-direction: row;
     }
     .dropdown{
-        font-size: 20px;
-        width: 80vw;
+        font-size: 40px;
+        width: 90vw;
         /* height: 20px; */
         
         margin-bottom: 5px;
         margin-left: 5px;
     }
     #header{
-        height: 30px;
+        height: 40px;
     }
     #image{
         height: 100%;
@@ -63,7 +63,7 @@ background-color:  rgb(230, 230, 230); ;
 
 
 
-@media (min-width:800px)  { 
+@media (min-width:1000px)  { 
     p{
         font-size: 2vw;
         
