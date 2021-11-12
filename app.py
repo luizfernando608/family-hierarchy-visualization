@@ -164,7 +164,7 @@ cytoscape_stylesheet = [
      }},
 ]
 app = dash.Dash("Family Network")
-
+server = app.server
 
 app.layout = html.Div(id="body", children=[
     html.Article([
@@ -263,4 +263,3 @@ def highlight_node_path(source_id, target_id):
     return cytoscape_stylesheet + style,"",""
 
 
-server = app.server
