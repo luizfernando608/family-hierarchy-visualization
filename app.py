@@ -1,5 +1,6 @@
 
 #%%
+from logging import debug
 import pandas as pd
 import networkx as nx
 import matplotlib.colors as mcolors
@@ -174,7 +175,7 @@ app.layout = html.Div(id="body", children=[
                 html.Img(id="image", src='/assets/tree.png')
             ]),
             html.Div(id="box-people-connection", children=[
-                html.H2("Conheça a conexão entre duas pessoas:"),
+                html.H2("Parentesco entre duas pessoas:"),
                 html.Div([
                     dcc.Dropdown(
                         id='input-source-id',
@@ -182,13 +183,15 @@ app.layout = html.Div(id="body", children=[
                                  for (idx, name) in name_by_id.items()],
                         searchable=True,
                         className="dropdown",
+                        placeholder="Selecione pessoa 1"
                     ),
                     dcc.Dropdown(
                         id='input-target-id',
                         options=[{'label': name.split(" ")[0]+" "+name.split(" ")[-1], 'value': idx}
                                  for (idx, name) in name_by_id.items()],
                         searchable=True,
-                        className="dropdown"
+                        className="dropdown",
+                        placeholder="Selecione pessoa 2"
                     ),
                 ],
                     className="column2"),
@@ -196,18 +199,20 @@ app.layout = html.Div(id="body", children=[
                 html.P(id="path-length")
             ]),
             html.Div(id="box-ancestors", children=[
-                html.H2("Selecione uma pessoa e veja os seus ancestrais ou descendentes:"),
+                html.H2("Conheça a árvore de alguém:"),
                 html.Div(children=[
                     dcc.Dropdown(id='ancestors-descendants',
                                  className="dropdown",
                                  options=[{'label': "Ancestrais", 'value': True},
                                          {'label': "Descendentes", 'value': False}],
-                                 searchable=True),
+                                 searchable=True,
+                                 placeholder="Ancestrais ou Descendentes?"),
                     dcc.Dropdown(id='input-all',
                                  className="dropdown",
                                  options=[{'label': name.split(" ")[0]+" "+name.split(" ")[-1], 'value': idx}
                                           for (idx, name) in name_by_id.items()],
-                                 searchable=True),
+                                 searchable=True,
+                                 placeholder="Selecione uma pessoa"),
                                  ], className="column2",)
             ]),
         ]),
@@ -221,7 +226,8 @@ app.layout = html.Div(id="body", children=[
 ])
 
 
-@app.callback(Output('cytoscape', 'elements'), 
+@app.callback(Output('cytoscape', 'elements'),
+             Output('cytoscape', 'layout'),
              Input('input-all', 'value'), 
              Input('ancestors-descendants', 'value'))
 def get_all_descendants(source_id, is_ancestors):
@@ -242,9 +248,9 @@ def get_all_descendants(source_id, is_ancestors):
 
         subtree_elements_edges = nx.readwrite.json_graph.cytoscape_data(sub_tree)['elements']['edges']
         # print(subtree_elements_nodes)
-        return subtree_elements_edges + subtree_elements_nodes
+        return subtree_elements_edges + subtree_elements_nodes,{'name': 'dagre'}
 
-    return cyto_family_edges+cyto_family_nodes
+    return cyto_family_edges+cyto_family_nodes,{'name': 'cose-bilkent'}
 
 
 @app.callback(Output('cytoscape', 'stylesheet'),
@@ -259,7 +265,6 @@ def highlight_node_path(source_id, target_id):
         if len(path) == 0:
             return cytoscape_stylesheet+style, "Não há relação entre eles",""
         style = dict_to_highlight_path(path)
-        return cytoscape_stylesheet + style,"", f"Relação de {len(path[0])}º grau"
+        return cytoscape_stylesheet + style,"", f"Relação de {len(path[0])-1}º grau"
     return cytoscape_stylesheet + style,"",""
-
 
