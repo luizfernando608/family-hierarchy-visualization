@@ -9,6 +9,7 @@ import dash_html_components as html
 import dash_cytoscape as cyto
 import dash_core_components as dcc
 from dash.dependencies import Input, Output
+import dash_bootstrap_components as dbc
 from networkx.algorithms.traversal.depth_first_search import dfs_tree
 import numpy as np
 
@@ -92,6 +93,7 @@ def get_path(family_tree: nx.classes.digraph.DiGraph, source_id: str, target_id:
 
     return all_shortest_paths
 
+
 def dict_to_highlight_path(paths: list):
     edge_style = []
     node_style = []
@@ -169,6 +171,8 @@ server = app.server
 
 app.layout = html.Div(id="body", children=[
     html.Article([
+        html.Details([
+        html.Summary("Menu"),
         html.Div(id="box-fields", children=[
             html.Div(id="header", children=[
                 html.H1('Surubeju  Network', id="title"),
@@ -215,7 +219,7 @@ app.layout = html.Div(id="body", children=[
                                  placeholder="Selecione uma pessoa"),
                                  ], className="column2",)
             ]),
-        ]),
+        ])]),
         cyto.Cytoscape(
             id='cytoscape',
             elements=cyto_family_nodes+cyto_family_edges,
@@ -268,3 +272,4 @@ def highlight_node_path(source_id, target_id):
         return cytoscape_stylesheet + style,"", f"Relação de {len(path[0])-1}º grau"
     return cytoscape_stylesheet + style,"",""
 
+app.run_server(debug=False)

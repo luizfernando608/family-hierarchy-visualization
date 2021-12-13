@@ -35,7 +35,7 @@ article{
 
 
 
-@media (min-width:50px)  { 
+ @media (min-width:50px)  { 
     body, html { 
         overflow-x: hidden; 
         overflow-y: auto;
@@ -78,7 +78,6 @@ article{
         margin-top: 0px;
     }
  }
-
 
 
 @media (min-width:900px)  { 
@@ -137,7 +136,6 @@ article{
  }
 
 
-
 @media (min-width:1281px) { 
 
 div{
@@ -148,7 +146,6 @@ h1{
     font-weight: bold;
 }
 h2{
-    /* margin: 5px; */
     margin-left: 10px;
     margin-bottom: 0px;
     font-size: 1.2rem;
@@ -198,8 +195,13 @@ p{
     margin-left: 10px;
 }
 
-
-
 }
 
 
+summary{
+    font-size: 15px;
+    background-color: rgb(230, 230, 230);
+    padding-top: 5px;
+    padding-bottom: 5px;
+    padding-left: 10px;
+}
