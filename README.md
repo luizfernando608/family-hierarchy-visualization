@@ -25,7 +25,7 @@ Cytoscape.js, oferece integrações com layouts e callbacks do Dash."
 Na aplicação, esta biblioteca cria o plot do grafo em uma página web e viabiliza todas as interações dinâmicas do usuário.
 
 ## Funcionalidades
-'
+
 ### Relação entre dois indivíduos
 Digitando o nome de duas pessoas é possível obter a relação de parentesco entre elas.
 <img src="img/caminho_antonio.png">
@@ -38,6 +38,9 @@ Veja o exemplo da "Zaira Vasconcelos" com seus ancestrais e descendentes, respec
 <img src="img/ancestrais.png">
 
 <img src="img/descendentes.png">
+
+## Escolha de cores
+Em referência ao termo árvore genealógica, decidi colorir as raízes da árvore de marrom e as folhas de verde.
 
 ## Responsividade
 
