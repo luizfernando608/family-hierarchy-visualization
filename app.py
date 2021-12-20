@@ -1,9 +1,7 @@
 
 #%%
-from logging import debug
 import pandas as pd
 import networkx as nx
-import matplotlib.colors as mcolors
 import dash
 import dash_html_components as html
 import dash_cytoscape as cyto
@@ -12,44 +10,47 @@ from dash.dependencies import Input, Output
 import dash_bootstrap_components as dbc
 from networkx.algorithms.traversal.depth_first_search import dfs_tree
 import numpy as np
-
+import sqlalchemy as sql
 #%%
-# Coletando Data Frame do xls
-full_data = pd.read_excel('familia.xlsx', index_col=0)
-name_by_id = full_data[["nome"]].to_dict()["nome"]
+param_dic = {"host": "localhost","database":"familynet","user":"postgres","password":"1234"}
+engine = sql.create_engine("postgresql+psycopg2://postgres:1234@localhost/familynet")
+query_names = "select *  from names"
+query_relations = "select * from relations"
+
+with engine.connect() as conn:
+    tuple_names = conn.execute(query_names).fetchall()
+    tuple_relations = conn.execute(query_relations).fetchall()
+
+names_data = pd.DataFrame(tuple_names, columns=["id", "nome","apelido"])
+#%%
+relations_data = pd.DataFrame(tuple_relations,columns=["id","pai_id","mae_id"])
+#%%
+name_by_id = names_data[["id","nome"]].set_index("id").to_dict()["nome"]
 
 #%%
 # Criando o Grafo
 family_tree = nx.DiGraph()
 # Adicionando os nodes
-for idx in full_data.index:
-    short_name = name_by_id[idx].split(
-        " ")[0]+" "+name_by_id[idx].split(" ")[-1]
-    family_tree.add_node(str(idx),
-                         id=str(idx),
-                         short_name=short_name,
-                         full_name=name_by_id[idx],
-                         #  color=colors_by_id[idx]
-                         )
+for row in names_data.values:
+    short_name = row[1].split(" ")[0]+" "+row[1].split(" ")[-1]
+    family_tree.add_node(str(row[0]),
+                        id=str(row[0]),
+                        short_name=short_name,
+                        full_name = row[1])
 
 #%%
-# Adicionando Edges
-father_ids = full_data["pai_id"].values
-mother_ids = full_data["mae_id"].values
-name_ids = full_data["nome"].index.values
 edges_list = []
-
-for name_id, father_id, mother_id in zip(name_ids, father_ids, mother_ids):
-    if pd.notna(father_id):
-        edges_list.append((str(name_id), str(int(father_id))))
-    if pd.notna(mother_id):
-        edges_list.append((str(name_id), str(int(mother_id))))
-
+count = 0
+for relation in relations_data.values:
+    count += 1
+    if not np.isnan(relation[1]):
+        edges_list.append((str(int(relation[0])),str(int(relation[1]))))
+    if not np.isnan(relation[2]):
+        edges_list.append((str(int(relation[0])),str(int(relation[2]))))
 
 family_tree.add_edges_from(edges_list)
 
 #%%
-
 family_degrees = family_tree.in_degree
 max_degre = max([degree for id, degree in family_degrees])
 green = np.array((57, 173, 51))
@@ -66,7 +67,7 @@ cyto_family_nodes = nx.readwrite.json_graph.cytoscape_data(family_tree)[
     'elements']['nodes']
 cyto_family_edges = nx.readwrite.json_graph.cytoscape_data(family_tree)[
     'elements']['edges']
-cyto_family_edges[0]
+
 
 #%%
 def get_path(family_tree: nx.classes.digraph.DiGraph, source_id: str, target_id: str):
@@ -213,7 +214,8 @@ app.layout = html.Div(id="body", children=[
                                  placeholder="Ancestrais ou Descendentes?"),
                     dcc.Dropdown(id='input-all',
                                  className="dropdown",
-                                 options=[{'label': name.split(" ")[0]+" "+name.split(" ")[-1], 'value': idx}
+                                 options=[{'label': name.split(" ")[0]+" "+name.split(" ")[-1], 
+                                          'value': idx}
                                           for (idx, name) in name_by_id.items()],
                                  searchable=True,
                                  placeholder="Selecione uma pessoa"),
@@ -226,9 +228,72 @@ app.layout = html.Div(id="body", children=[
             layout={'name': 'cose-bilkent'},
             style={'width': '100vw', 'height': '100vh'},
             stylesheet=cytoscape_stylesheet)
-    ])
+    ]),
+    dcc.Interval(
+        id="interval_component",
+        interval=100*1000,
+        n_intervals=0
+    ),
+    html.P(id="interval_result"),
 ])
 
+@app.callback(Output('interval_result','children'),
+            Input('interval_component','n_intervals'))
+def update_metrics(n):
+    print(n)
+    global names_data
+    global relations_data
+    global name_by_id
+    global family_tree
+    with engine.connect() as conn:
+        tuple_names = conn.execute(query_names).fetchall()
+        tuple_relations = conn.execute(query_relations).fetchall()
+    names_data = pd.DataFrame(tuple_names, columns=["id", "nome","apelido"])
+    relations_data = pd.DataFrame(tuple_relations,columns=["id","pai_id","mae_id"])
+    name_by_id = names_data[["id","nome"]].set_index("id").to_dict()["nome"]
+
+    family_tree = nx.DiGraph()
+    # Adicionando os nodes
+    for row in names_data.values:
+        short_name = row[1].split(" ")[0]+" "+row[1].split(" ")[-1]
+        family_tree.add_node(str(row[0]),
+                            id=str(row[0]),
+                            short_name=short_name,
+                            full_name = row[1])
+
+    
+    edges_list = []
+    count = 0
+    for relation in relations_data.values:
+        count += 1
+        if not np.isnan(relation[1]):
+            edges_list.append((str(int(relation[0])),str(int(relation[1]))))
+        if not np.isnan(relation[2]):
+            edges_list.append((str(int(relation[0])),str(int(relation[2]))))
+
+    family_tree.add_edges_from(edges_list)
+
+    #%%
+    family_degrees = family_tree.in_degree
+    max_degre = max([degree for id, degree in family_degrees])
+    green = np.array((57, 173, 51))
+    brown = np.array((51, 31, 15))
+    step = (brown-green)/max_degre
+
+    for id, node in family_tree.nodes(data=True):
+        degree = family_degrees[node['id']]
+        node["size"] = ((degree)+5)*5
+        node["color"] = f"rgb{str(tuple(green+step*degree))}"
+
+    global cyto_family_nodes
+    global cyto_family_edges
+    cyto_family_nodes = nx.readwrite.json_graph.cytoscape_data(family_tree)[
+        'elements']['nodes']
+    cyto_family_edges = nx.readwrite.json_graph.cytoscape_data(family_tree)[
+        'elements']['edges']
+
+
+    return ""
 
 @app.callback(Output('cytoscape', 'elements'),
              Output('cytoscape', 'layout'),
@@ -272,4 +337,4 @@ def highlight_node_path(source_id, target_id):
         return cytoscape_stylesheet + style,"", f"Relação de {len(path[0])-1}º grau"
     return cytoscape_stylesheet + style,"",""
 
-app.run_server(debug=False)
+app.run_server(debug=False, port=8060)
