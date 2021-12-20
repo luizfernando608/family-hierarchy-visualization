@@ -11,9 +11,15 @@ import dash_bootstrap_components as dbc
 from networkx.algorithms.traversal.depth_first_search import dfs_tree
 import numpy as np
 import sqlalchemy as sql
+import os
 #%%
-param_dic = {"host": "localhost","database":"familynet","user":"postgres","password":"1234"}
-engine = sql.create_engine("postgresql+psycopg2://postgres:1234@localhost/familynet")
+host = "ec2-52-6-159-25.compute-1.amazonaws.com"
+database = "dctbig3mhifk8i"
+user = "xtwpbwfnwztfnd"
+port = 5432
+password = os.getenv("SENHA")
+# param_dic = {"host": "localhost","database":"familynet","user":"postgres","password":"1234"}
+engine = sql.create_engine(f"postgresql+psycopg2://{user}:{password}@{host}/{database}")
 query_names = "select *  from names"
 query_relations = "select * from relations"
 
@@ -337,4 +343,4 @@ def highlight_node_path(source_id, target_id):
         return cytoscape_stylesheet + style,"", f"Relação de {len(path[0])-1}º grau"
     return cytoscape_stylesheet + style,"",""
 
-app.run_server(debug=False, port=8060)
+# app.run_server(debug=False, port=8060)
