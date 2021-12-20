@@ -30,3 +30,4 @@ dash_cytoscape
 openpyxl
 sqlalchemy
 dash_bootstrap_components
+psycopg2
