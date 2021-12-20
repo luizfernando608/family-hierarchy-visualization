@@ -29,5 +29,4 @@ xlrd
 dash_cytoscape
 openpyxl
 sqlalchemy
-os
 dash_bootstrap_components
