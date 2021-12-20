@@ -28,3 +28,6 @@ Werkzeug==2.0.2
 xlrd
 dash_cytoscape
 openpyxl
+sqlalchemy
+os
+dash_bootstrap_components
