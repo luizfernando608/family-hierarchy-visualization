@@ -18,6 +18,7 @@ database = "dctbig3mhifk8i"
 user = "xtwpbwfnwztfnd"
 port = 5432
 password = os.getenv("SENHA")
+
 # param_dic = {"host": "localhost","database":"familynet","user":"postgres","password":"1234"}
 engine = sql.create_engine(f"postgresql+psycopg2://{user}:{password}@{host}/{database}")
 query_names = "select *  from names"
@@ -215,7 +216,7 @@ app.layout = html.Div(id="body", children=[
                     dcc.Dropdown(id='ancestors-descendants',
                                  className="dropdown",
                                  options=[{'label': "Ancestrais", 'value': True},
-                                         {'label': "Descendentes", 'value': False}],
+                                        {'label': "Descendentes", 'value': False}],
                                  searchable=False,
                                  placeholder="Ancestrais ou Descendentes?"),
                     dcc.Dropdown(id='input-all',
@@ -237,13 +238,15 @@ app.layout = html.Div(id="body", children=[
     ]),
     dcc.Interval(
         id="interval_component",
-        interval=100*1000,
+        interval=5*1000,
         n_intervals=0
     ),
     html.P(id="interval_result"),
 ])
 
-@app.callback(Output('interval_result','children'),
+@app.callback([Output('input-source-id','options'),
+            Output('input-target-id','options'),
+            Output('input-all','options')],
             Input('interval_component','n_intervals'))
 def update_metrics(n):
     print(n)
@@ -298,8 +301,10 @@ def update_metrics(n):
     cyto_family_edges = nx.readwrite.json_graph.cytoscape_data(family_tree)[
         'elements']['edges']
 
+    options_dict= [{'label': name.split(" ")[0]+" "+name.split(" ")[-1], 'value': idx}
+                                 for (idx, name) in name_by_id.items()]
 
-    return ""
+    return options_dict, options_dict, options_dict
 
 @app.callback(Output('cytoscape', 'elements'),
              Output('cytoscape', 'layout'),
@@ -343,4 +348,4 @@ def highlight_node_path(source_id, target_id):
         return cytoscape_stylesheet + style,"", f"Relação de {len(path[0])-1}º grau"
     return cytoscape_stylesheet + style,"",""
 
-# app.run_server(debug=False, port=8060)
+app.run_server(debug=False, port=8060)
