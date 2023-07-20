@@ -26,10 +26,18 @@ with engine.connect() as conn:
     tuple_names = conn.execute(query_names).fetchall()
     tuple_relations = conn.execute(query_relations).fetchall()
 
-names_data = pd.DataFrame(tuple_names, columns=["id", "nome","apelido"])
-#%%
-relations_data = pd.DataFrame(tuple_relations,columns=["id","pai_id","mae_id"])
-#%%
+    names_data = pd.read_sql(query_names, conn)
+    names_data.columns = ["id", "nome","apelido"]
+    names_data.replace("", np.nan, inplace=True)
+    names_data.replace(" ", np.nan, inplace=True)
+
+
+    relations_data = pd.read_sql(query_relations, conn)
+    relations_data.columns = ["id","pai_id","mae_id"]
+    relations_data.replace("", np.nan, inplace=True)
+    relations_data.replace(" ", np.nan, inplace=True)
+
+
 name_by_id = names_data[["id","nome"]].set_index("id").to_dict()["nome"]
 
 #%%
