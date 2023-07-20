@@ -232,75 +232,19 @@ app.layout = html.Div(id="body", children=[
             style={'width': '100vw', 'height': '100vh'},
             stylesheet=cytoscape_stylesheet)
     ]),
-    dcc.Interval(
-        id="interval_component",
-        interval=5*1000,
-        n_intervals=0
-    ),
+    # dcc.Interval(
+    #     id="interval_component",
+    #     interval=5*1000,
+    #     n_intervals=0
+    # ),
     html.P(id="interval_result"),
 ])
 
-@app.callback([Output('input-source-id','options'),
-            Output('input-target-id','options'),
-            Output('input-all','options')],
-            Input('interval_component','n_intervals'))
-def update_metrics(n):
-    print(n)
-    global names_data
-    global relations_data
-    global name_by_id
-    global family_tree
-    with engine.connect() as conn:
-        tuple_names = conn.execute(query_names).fetchall()
-        tuple_relations = conn.execute(query_relations).fetchall()
-    names_data = pd.DataFrame(tuple_names, columns=["id", "nome","apelido"])
-    relations_data = pd.DataFrame(tuple_relations,columns=["id","pai_id","mae_id"])
-    name_by_id = names_data[["id","nome"]].set_index("id").to_dict()["nome"]
+# @app.callback([Output('input-source-id','options'),
+#             Output('input-target-id','options'),
+#             Output('input-all','options')],
+#             Input('interval_component','n_intervals'))
 
-    family_tree = nx.DiGraph()
-    # Adicionando os nodes
-    for row in names_data.values:
-        short_name = row[1].split(" ")[0]+" "+row[1].split(" ")[-1]
-        family_tree.add_node(str(row[0]),
-                            id=str(row[0]),
-                            short_name=short_name,
-                            full_name = row[1])
-
-    
-    edges_list = []
-    count = 0
-    for relation in relations_data.values:
-        count += 1
-        if not np.isnan(relation[1]):
-            edges_list.append((str(int(relation[0])),str(int(relation[1]))))
-        if not np.isnan(relation[2]):
-            edges_list.append((str(int(relation[0])),str(int(relation[2]))))
-
-    family_tree.add_edges_from(edges_list)
-
-    #%%
-    family_degrees = family_tree.in_degree
-    max_degre = max([degree for id, degree in family_degrees])
-    green = np.array((57, 173, 51))
-    brown = np.array((51, 31, 15))
-    step = (brown-green)/max_degre
-
-    for id, node in family_tree.nodes(data=True):
-        degree = family_degrees[node['id']]
-        node["size"] = ((degree)+5)*5
-        node["color"] = f"rgb{str(tuple(green+step*degree))}"
-
-    global cyto_family_nodes
-    global cyto_family_edges
-    cyto_family_nodes = nx.readwrite.json_graph.cytoscape_data(family_tree)[
-        'elements']['nodes']
-    cyto_family_edges = nx.readwrite.json_graph.cytoscape_data(family_tree)[
-        'elements']['edges']
-
-    options_dict= [{'label': name.split(" ")[0]+" "+name.split(" ")[-1], 'value': idx}
-                                 for (idx, name) in name_by_id.items()]
-
-    return options_dict, options_dict, options_dict
 
 @app.callback(Output('cytoscape', 'elements'),
              Output('cytoscape', 'layout'),
