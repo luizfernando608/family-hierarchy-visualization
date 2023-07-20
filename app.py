@@ -36,12 +36,24 @@ name_by_id = names_data[["id","nome"]].set_index("id").to_dict()["nome"]
 # Criando o Grafo
 family_tree = nx.DiGraph()
 # Adicionando os nodes
-for row in names_data.values:
-    short_name = row[1].split(" ")[0]+" "+row[1].split(" ")[-1]
-    family_tree.add_node(str(row[0]),
-                        id=str(row[0]),
-                        short_name=short_name,
-                        full_name = row[1])
+for idx, row in names_data.iterrows():
+    full_name = row["nome"]
+    nick_name = row["apelido"]
+    
+    if not pd.isna(nick_name):
+        short_name = nick_name
+
+    elif len(full_name.split(" ")) == 1:
+        short_name = full_name.split(" ")[0]
+        
+    else:
+        short_name = full_name.split(" ")[0]+" "+full_name.split(" ")[-1]
+    
+
+    family_tree.add_node(str(row["id"]),
+                        id=str(row["id"]),
+                        short_name = short_name,
+                        full_name = full_name)
 
 #%%
 edges_list = []
