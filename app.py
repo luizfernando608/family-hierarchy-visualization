@@ -19,8 +19,11 @@ user = "xtwpbwfnwztfnd"
 port = 5432
 password = os.getenv("SENHA")
 
-# param_dic = {"host": "localhost","database":"familynet","user":"postgres","password":"1234"}
-engine = sql.create_engine(f"postgresql+psycopg2://{user}:{password}@{host}/{database}")
+root_path = os.path.dirname(os.path.abspath(__file__))
+database_path = os.path.join(root_path,"Data","family.db")
+
+engine = sql.create_engine(f'sqlite:///{database_path}')
+
 query_names = "select *  from names"
 query_relations = "select * from relations"
 
