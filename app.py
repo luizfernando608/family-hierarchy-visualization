@@ -345,4 +345,4 @@ def highlight_node_path(source_id, target_id):
     return cytoscape_stylesheet + style,"",""
 
 
-# app.run_server(debug=False, port=8060)
+app.run_server(debug=False, port=8060)
