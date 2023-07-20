@@ -13,11 +13,6 @@ import numpy as np
 import sqlalchemy as sql
 import os
 #%%
-host = "ec2-52-6-159-25.compute-1.amazonaws.com"
-database = "dctbig3mhifk8i"
-user = "xtwpbwfnwztfnd"
-port = 5432
-password = os.getenv("SENHA")
 
 root_path = os.path.dirname(os.path.abspath(__file__))
 database_path = os.path.join(root_path,"Data","family.db")
