@@ -68,10 +68,8 @@ for id, node in family_tree.nodes(data=True):
     node["color"] = f"rgb{str(tuple(green+step*degree))}"
 
 #%%
-cyto_family_nodes = nx.readwrite.json_graph.cytoscape_data(family_tree)[
-    'elements']['nodes']
-cyto_family_edges = nx.readwrite.json_graph.cytoscape_data(family_tree)[
-    'elements']['edges']
+cyto_family_nodes = nx.readwrite.json_graph.cytoscape_data(family_tree)['elements']['nodes']
+cyto_family_edges = nx.readwrite.json_graph.cytoscape_data(family_tree)['elements']['edges']
 
 
 #%%
