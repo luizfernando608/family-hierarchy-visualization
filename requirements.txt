@@ -28,6 +28,6 @@ Werkzeug==2.0.2
 xlrd
 dash_cytoscape
 openpyxl
-sqlalchemy
+sqlalchemy==1.44.4
 dash_bootstrap_components
 psycopg2
