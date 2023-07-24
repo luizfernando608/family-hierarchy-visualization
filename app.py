@@ -1,4 +1,3 @@
-
 #%%
 import pandas as pd
 import networkx as nx
@@ -14,40 +13,20 @@ import sqlalchemy as sql
 import os
 #%%
 
-root_path = os.path.dirname(os.path.abspath(__file__))
-database_path = os.path.join(root_path,"Data","family.db")
+ROOT_PATH = os.path.dirname(os.path.abspath(__file__))
+DATABASE_PATH = os.path.join(ROOT_PATH,"Data","family.db")
 
-engine = sql.create_engine(f'sqlite:///{database_path}')
+def read_sql(query):
+    engine = sql.create_engine(f'sqlite:///{DATABASE_PATH}')
 
-query_names = "select *  from names"
-query_relations = "select * from relations"
+    with engine.connect() as conn:
+        data = pd.read_sql(query, conn)
+        data.replace("", np.nan, inplace=True)
+        data.replace(" ", np.nan, inplace=True)
+    return data
 
-with engine.connect() as conn:
-    tuple_names = conn.execute(query_names).fetchall()
-    tuple_relations = conn.execute(query_relations).fetchall()
-
-    names_data = pd.read_sql(query_names, conn)
-    names_data.columns = ["id", "nome","apelido"]
-    names_data.replace("", np.nan, inplace=True)
-    names_data.replace(" ", np.nan, inplace=True)
-
-
-    relations_data = pd.read_sql(query_relations, conn)
-    relations_data.columns = ["id","pai_id","mae_id"]
-    relations_data.replace("", np.nan, inplace=True)
-    relations_data.replace(" ", np.nan, inplace=True)
-
-
-name_by_id = names_data[["id","nome"]].set_index("id").to_dict()["nome"]
-
-#%%
-# Criando o Grafo
-family_tree = nx.DiGraph()
-# Adicionando os nodes
-for idx, row in names_data.iterrows():
-    full_name = row["nome"]
-    nick_name = row["apelido"]
-    
+# name_by_id = names_data[["id","nome"]].set_index("id").to_dict()["nome"]
+def build_short_name(full_name, nick_name):
     if not pd.isna(nick_name):
         short_name = nick_name
 
@@ -56,40 +35,84 @@ for idx, row in names_data.iterrows():
         
     else:
         short_name = full_name.split(" ")[0]+" "+full_name.split(" ")[-1]
+    return short_name
+
+
+def get_dropdown_names():
+    names_data = read_sql("select *  from names")
+    names_data.columns = ["id", "nome","apelido"]
+    names_data["short_name"] = names_data.apply(lambda row: build_short_name(row["nome"], row["apelido"]), axis=1)
     
+    names_data.sort_values(by="short_name", inplace=True)
+    # build dict in format {"label": "name", "value": "id"}
+    dropdown_names = [{"label": row["short_name"], "value": str(row["id"])} for idx, row in names_data.iterrows()]
+    
+    return dropdown_names
 
-    family_tree.add_node(str(row["id"]),
-                        id=str(row["id"]),
-                        short_name = short_name,
-                        full_name = full_name)
 
-#%%
-edges_list = []
-count = 0
-for relation in relations_data.values:
-    count += 1
-    if not np.isnan(relation[1]):
-        edges_list.append((str(int(relation[0])),str(int(relation[1]))))
-    if not np.isnan(relation[2]):
-        edges_list.append((str(int(relation[0])),str(int(relation[2]))))
+def build_tree():
 
-family_tree.add_edges_from(edges_list)
+    # ler os dados
+    names_data = read_sql("select *  from names")
+    names_data.columns = ["id", "nome","apelido"]
+    # names that starts with P
+    print(names_data.tail(60))
 
-#%%
-family_degrees = family_tree.in_degree
-max_degre = max([degree for id, degree in family_degrees])
-green = np.array((57, 173, 51))
-brown = np.array((51, 31, 15))
-step = (brown-green)/max_degre
+    relations_data = read_sql("select * from relations")
+    relations_data.columns = ["id","pai_id","mae_id"]
 
-for id, node in family_tree.nodes(data=True):
-    degree = family_degrees[node['id']]
-    node["size"] = ((degree)+5)*5
-    node["color"] = f"rgb{str(tuple(green+step*degree))}"
+    # Criando o Grafo
+    family_tree = nx.DiGraph()
 
-#%%
-cyto_family_nodes = nx.readwrite.json_graph.cytoscape_data(family_tree)['elements']['nodes']
-cyto_family_edges = nx.readwrite.json_graph.cytoscape_data(family_tree)['elements']['edges']
+
+    # Adicionando os nodes
+    for idx, row in names_data.iterrows():
+        full_name = row["nome"]
+        nick_name = row["apelido"]
+        
+        short_name = build_short_name(full_name, nick_name)
+
+        family_tree.add_node(str(row["id"]),
+                            id=str(row["id"]),
+                            short_name = short_name,
+                            full_name = full_name)
+
+    # Adicionando as arestas
+    edges_list = []
+    for relation in relations_data.values:
+
+        if not np.isnan(relation[1]):
+            edges_list.append((str(int(relation[0])),str(int(relation[1]))))
+            
+
+        if not np.isnan(relation[2]):
+            edges_list.append((str(int(relation[0])),str(int(relation[2]))))
+
+
+    family_tree.add_edges_from(edges_list)
+
+    # Criando Logica de cores e tamanhos
+    family_degrees = family_tree.in_degree
+
+    max_degre = max([degree for id, degree in family_degrees])
+    green = np.array((57, 173, 51))
+    brown = np.array((51, 31, 15))
+    step = (brown-green)/max_degre
+
+    # Adicionando core aos nós
+    for id, node in family_tree.nodes(data=True):
+        try:
+            degree = family_degrees[node['id']]
+
+        except:
+            print(id, node)
+            continue
+
+        node["size"] = ((degree)+5)*5
+        node["color"] = f"rgb{str(tuple(green+step*degree))}"
+    
+    return family_tree
+
 
 
 #%%
@@ -150,9 +173,11 @@ def dict_to_highlight_path(paths: list):
             ]
 
     return node_style + edge_style
-#%%
+
+
 cyto.load_extra_layouts()
 #%%
+
 cytoscape_stylesheet = [
     {'selector': 'node',
      'style': {'label': 'data(short_name)',
@@ -170,17 +195,11 @@ cytoscape_stylesheet = [
 
                "text-halign":"center",
                "text-valign":"center",
-            #    "text-border-opacity":"1",
-            #    "text-border-width":"10",
-            #    "text-border-color":"white",
-
-            #    "text-background-color":"white",
-            #    "text-background-opacity":"1",
+ 
                "color":"white",
                "text-outline-color":"black",
                "text-outline-opacity":"1",
                "text-outline-width":"1"
-            #    "text-overflow-wrap":"whitespace"
                },
      },
     {'selector': 'edge',
@@ -190,33 +209,41 @@ cytoscape_stylesheet = [
          "width": "5px"
      }},
 ]
-app = dash.Dash("Family Network")
-server = app.server
 
-app.layout = html.Div(id="body", children=[
+
+
+def get_elements():
+    family_tree = build_tree()
+
+    cyto_family_nodes = nx.readwrite.json_graph.cytoscape_data(family_tree)['elements']['nodes']
+    cyto_family_edges = nx.readwrite.json_graph.cytoscape_data(family_tree)['elements']['edges']
+
+    return cyto_family_nodes + cyto_family_edges
+
+
+def serve_layout():
+    layout = html.Div(id="body", children=[
     html.Article([
         html.Details([
         html.Summary("Menu"),
         html.Div(id="box-fields", children=[
             html.Div(id="header", children=[
                 html.H1('Surubeju  Network', id="title"),
-                html.Img(id="image", src='/assets/tree.png')
+                html.Img(id="image", src=os.path.join(ROOT_PATH,'/assets/tree.png'))
             ]),
             html.Div(id="box-people-connection", children=[
                 html.H2("Parentesco entre duas pessoas:"),
                 html.Div([
                     dcc.Dropdown(
                         id='input-source-id',
-                        options=[{'label': name.split(" ")[0]+" "+name.split(" ")[-1], 'value': idx}
-                                 for (idx, name) in name_by_id.items()],
+                        options=get_dropdown_names(),
                         searchable=True,
                         className="dropdown",
                         placeholder="Selecione pessoa 1"
                     ),
                     dcc.Dropdown(
                         id='input-target-id',
-                        options=[{'label': name.split(" ")[0]+" "+name.split(" ")[-1], 'value': idx}
-                                 for (idx, name) in name_by_id.items()],
+                        options=get_dropdown_names(),
                         searchable=True,
                         className="dropdown",
                         placeholder="Selecione pessoa 2"
@@ -237,47 +264,55 @@ app.layout = html.Div(id="body", children=[
                                  placeholder="Ancestrais ou Descendentes?"),
                     dcc.Dropdown(id='input-all',
                                  className="dropdown",
-                                 options=[{'label': name.split(" ")[0]+" "+name.split(" ")[-1], 
-                                          'value': idx}
-                                          for (idx, name) in name_by_id.items()],
+                                 options=get_dropdown_names(),
                                  searchable=True,
                                  placeholder="Selecione uma pessoa"),
                                  ], className="column2",)
-            ]),
-        ])]),
-        cyto.Cytoscape(
-            id='cytoscape',
-            elements=cyto_family_nodes+cyto_family_edges,
-            layout={'name': 'cose-bilkent'},
-            style={'width': '100vw', 'height': '100vh'},
-            stylesheet=cytoscape_stylesheet)
-    ]),
-    # dcc.Interval(
-    #     id="interval_component",
-    #     interval=5*1000,
-    #     n_intervals=0
-    # ),
-    html.P(id="interval_result"),
-])
+                ]),
+            ])]),
+            cyto.Cytoscape(
+                id='cytoscape',
+                elements=get_elements(),
+                layout={'name': 'cose-bilkent'},
+                style={'width': '100vw', 'height': '100vh'},
+                stylesheet=cytoscape_stylesheet)
+        ]),
 
-# @app.callback([Output('input-source-id','options'),
-#             Output('input-target-id','options'),
-#             Output('input-all','options')],
-#             Input('interval_component','n_intervals'))
+        html.P(id="interval_result"),
+    ])
+
+    return layout
+
+
+app = dash.Dash("Family Network")
+
+server = app.server
+
+app.layout = serve_layout
 
 
 @app.callback(Output('cytoscape', 'elements'),
              Output('cytoscape', 'layout'),
              Input('input-all', 'value'), 
-             Input('ancestors-descendants', 'value'))
+             Input('ancestors-descendants', 'value'),
+             prevent_initial_call=True)
 def get_all_descendants(source_id, is_ancestors):
+    
+    family_tree = build_tree()
+
+    cyto_family_nodes = nx.readwrite.json_graph.cytoscape_data(family_tree)['elements']['nodes']
+    cyto_family_edges = nx.readwrite.json_graph.cytoscape_data(family_tree)['elements']['edges']
+
     subtree_elements_nodes = []
     subtree_elements_edges = []
+
     if source_id is not None and is_ancestors is not None:
         if not is_ancestors:
             reverse_family_tree = family_tree.reverse(copy=True)
+
         else:
             reverse_family_tree = family_tree
+
         sub_tree = dfs_tree(reverse_family_tree, str(source_id))
 
         for id_node, data in sub_tree.nodes(data=True):
@@ -287,7 +322,7 @@ def get_all_descendants(source_id, is_ancestors):
             subtree_elements_nodes.append(temp_dict)
 
         subtree_elements_edges = nx.readwrite.json_graph.cytoscape_data(sub_tree)['elements']['edges']
-        # print(subtree_elements_nodes)
+
         return subtree_elements_edges + subtree_elements_nodes,{'name': 'dagre'}
 
     return cyto_family_edges+cyto_family_nodes,{'name': 'cose-bilkent'}
@@ -299,13 +334,21 @@ def get_all_descendants(source_id, is_ancestors):
               Input('input-source-id', 'value'),
               Input('input-target-id', 'value'))
 def highlight_node_path(source_id, target_id):
+    
+    family_tree = build_tree()
+
     style = []
     if source_id is not None and target_id is not None:
+
         path = get_path(family_tree, str(source_id), str(target_id))
+        
         if len(path) == 0:
             return cytoscape_stylesheet+style, "Não há relação entre eles",""
+        
         style = dict_to_highlight_path(path)
+        
         return cytoscape_stylesheet + style,"", f"Relação de {len(path[0])-1}º grau"
+    
     return cytoscape_stylesheet + style,"",""
 
 
